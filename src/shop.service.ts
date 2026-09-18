@@ -2,8 +2,9 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  ServiceUnavailableException,
+  GoneException,
 } from '@nestjs/common';
+import { DatabaseService } from './database.service';
 
 const products = [
   {
@@ -27,20 +28,16 @@ const products = [
     badge: 'team pick',
   },
 ];
-type StoredCart = {
-  quantities: Map<string, number>;
-  revision: number;
-  updatedAt: number;
-};
+type StoredCart = { quantities: Map<string, number>; revision: number };
 
 @Injectable()
 export class ShopService {
-  private readonly carts = new Map<string, StoredCart>();
+  constructor(private readonly database: DatabaseService) {}
   listProducts() {
     return products.map((product) => ({ ...product }));
   }
 
-  private cart(key: string): StoredCart {
+  validateGuestKey(key: string) {
     if (
       !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         key ?? '',
@@ -48,19 +45,33 @@ export class ShopService {
     ) {
       throw new BadRequestException('X-Cart-Key must be a UUID v4');
     }
-    const now = Date.now();
-    for (const [id, cart] of this.carts) {
-      if (now - cart.updatedAt > 24 * 60 * 60 * 1000) this.carts.delete(id);
+  }
+  private cart(key: string): StoredCart {
+    if (!key.startsWith('user:')) {
+      this.validateGuestKey(key);
+      if (this.database.db.prepare('SELECT cart_id FROM guest_claims WHERE cart_id = ?').get(key))
+        throw new GoneException('Гостевая корзина уже перенесена. Обновите сессию.');
     }
-    let cart = this.carts.get(key);
-    if (!cart) {
-      if (this.carts.size >= 1000)
-        throw new ServiceUnavailableException('Demo cart capacity reached');
-      cart = { quantities: new Map(), revision: 0, updatedAt: now };
-      this.carts.set(key, cart);
-    }
-    cart.updatedAt = now;
-    return cart;
+    const row = this.database.db.prepare('SELECT quantities, revision FROM carts WHERE id = ?').get(key);
+    return { quantities: new Map(Object.entries(JSON.parse(String(row?.quantities ?? '{}')))), revision: Number(row?.revision ?? 0) };
+  }
+  private save(key: string, cart: StoredCart) {
+    this.database.db.prepare(`INSERT INTO carts VALUES (?, ?, ?) ON CONFLICT(id)
+      DO UPDATE SET quantities = excluded.quantities, revision = excluded.revision`)
+      .run(key, JSON.stringify(Object.fromEntries(cart.quantities)), cart.revision);
+  }
+  mergeGuest(guest: string, userId: string) {
+    this.validateGuestKey(guest);
+    this.database.transaction(() => {
+      if (this.database.db.prepare('SELECT cart_id FROM guest_claims WHERE cart_id = ?').get(guest)) return;
+      const source = this.cart(guest);
+      const target = this.cart(`user:${userId}`);
+      for (const [id, quantity] of source.quantities) target.quantities.set(id, Math.min(99, (target.quantities.get(id) ?? 0) + quantity));
+      target.revision += 1;
+      this.save(`user:${userId}`, target);
+      this.database.db.prepare('INSERT INTO guest_claims VALUES (?, ?)').run(guest, userId);
+      this.database.db.prepare('DELETE FROM carts WHERE id = ?').run(guest);
+    });
   }
 
   getCart(key: string) {
@@ -103,12 +114,14 @@ export class ShopService {
     if (next > 99) throw new BadRequestException('Maximum quantity is 99');
     cart.quantities.set(productId, next);
     cart.revision += 1;
+    this.save(key, cart);
     return this.getCart(key);
   }
 
   remove(key: string, productId: string) {
     const cart = this.cart(key);
     if (cart.quantities.delete(productId)) cart.revision += 1;
+    this.save(key, cart);
     return this.getCart(key);
   }
 }

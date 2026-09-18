@@ -10,7 +10,7 @@ async function bootstrap() {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
-  app.enableCors({ origin: origins });
+  app.enableCors({ origin: origins, credentials: true });
   app.enableShutdownHooks();
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }

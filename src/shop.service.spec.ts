@@ -1,14 +1,18 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ShopService } from './shop.service';
+import { DatabaseService } from './database.service';
 
 describe('ShopService', () => {
   let shop: ShopService;
+  let database: DatabaseService;
+  afterEach(() => database.onModuleDestroy());
   const a = 'c9c5c662-b782-49b1-8ddd-1eac2388c001';
   const b = 'c9c5c662-b782-49b1-8ddd-1eac2388c002';
   beforeEach(() => {
    
  
-    shop = new ShopService();
+    database = new DatabaseService();
+    shop = new ShopService(database);
   });
   it('calculates prices on the server and isolates carts', () => {
     shop.change(a, 'keyboard', 2, true);
@@ -21,9 +25,7 @@ describe('ShopService', () => {
     expect(shop.remove(a, 'keyboard').totalMinor).toBe(0);
   });
   it('rejects malformed keys, unknown products and invalid quantities without a partial mutation', () => {
-    expect(() => shop.getCart('invalid')).toThrow(BadRequestE
-x     ception);
-        ,
+    expect(() => shop.getCart('invalid')).toThrow(BadRequestException);
       
     expect(() => shop.change(a, 'missing', 1)).toThrow(NotFoundException);
     for (const quantity of [0, -1, 1.5, '2', 100, undefined])

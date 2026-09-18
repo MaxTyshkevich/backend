@@ -1,3 +1,21 @@
+# Microfronts API: authentication and carts
+
+Node >=22.16 (24 LTS recommended). Run `npm ci`, then `npm run start:dev`.
+
+SQLite at `APP_DB_PATH` (default `data/shop.sqlite`) stores users, scrypt password hashes, hashed session tokens, carts and merge markers. Schema is initialized at startup. Prisma files are legacy and unused. Back up the database and deploy one API instance with a persistent disk.
+
+Auth: `GET /api/auth/me`, `POST /api/auth/register`, `/api/auth/login`, `/api/auth/logout`. Sessions last seven days. Registration accepts name, email and password (12–128 characters); login accepts email and password. Register/login can merge the guest cart passed as `X-Cart-Key`, once only.
+
+Use same-origin `/api` proxy on the Shell host. Forward Cookie, Set-Cookie and Origin. Set CORS_ORIGINS to the exact trusted frontend origins. Mutation requests require `X-Requested-With: microfronts`. Cookie is HttpOnly, SameSite=Lax and Secure in production; COOKIE_SECURE=false is only for local HTTP Docker. `X-Session-User` verifies the expected identity, never grants access.
+
+Docker needs a persistent volume at /app/data. Render blueprint uses paid Starter with a persistent disk at /var/data; no deployment is performed by editing it. Free ephemeral hosting loses authentication data.
+
+Checks: `npm run build`, `npm test -- --runInBand`, `npm run test:e2e -- --runInBand`. Tests use isolated in-memory or temporary databases. Integration browser/API tests live in the integration checkout.
+
+Rate limits: 10 authentication attempts per email and 40 per IP per 15 minutes. Behind a reverse proxy, configure trusted proxy topology before relying on per-visitor IP limits; do not blindly trust forwarded headers.
+
+Deploy backend and frontends as a coordinated release because older remotes do not send the required CSRF header.
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>

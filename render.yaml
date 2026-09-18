@@ -2,11 +2,17 @@ services:
   - type: web
     name: microfronts-api
     runtime: node
-    plan: free
+    plan: starter
+    disk:
+      name: shop-data
+      mountPath: /var/data
+      sizeGB: 1
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /api/health
     envVars:
+      - key: APP_DB_PATH
+        value: /var/data/shop.sqlite
       - key: NODE_VERSION
         value: 22.16.0
       - key: NODE_ENV
