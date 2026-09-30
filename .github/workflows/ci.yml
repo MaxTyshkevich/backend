@@ -3,6 +3,17 @@ on: [push, pull_request]
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_DB: microfronts_test
+          POSTGRES_USER: microfronts
+          POSTGRES_PASSWORD: local-test-only
+        ports: ["5434:5432"]
+        options: >-
+          --health-cmd "pg_isready -U microfronts -d microfronts_test"
+          --health-interval 3s --health-timeout 3s --health-retries 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -1,0 +1,40 @@
+name: microfronts-backend
+
+services:
+  db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: microfronts
+      POSTGRES_USER: microfronts
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run npm run db:setup first}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U microfronts -d microfronts"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # Isolated, disposable server: backend tests never clean the development DB.
+  db-test:
+    image: postgres:17-bookworm
+    profiles: [test]
+    environment:
+      POSTGRES_DB: microfronts_test
+      POSTGRES_USER: microfronts
+      POSTGRES_PASSWORD: local-test-only
+    ports:
+      - "127.0.0.1:${POSTGRES_TEST_PORT:-5434}:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U microfronts -d microfronts_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  postgres-data:
