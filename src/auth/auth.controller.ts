@@ -68,7 +68,6 @@ export class AuthController {
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    console.log({ body });
     await this.auth.limit(request.ip || 'unknown', body.email);
     const user = await this.auth.login(body);
 
