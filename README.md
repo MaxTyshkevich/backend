@@ -46,6 +46,8 @@ Backend размещается на Railway, отдельно от PostgreSQL-с
 
 ## Проверки
 
+Подробности конфигурации Jest и актуальных E2E-сценариев: [docs/TESTING.md](docs/TESTING.md).
+
 ```powershell
 npm run db:test:up
 npm test
