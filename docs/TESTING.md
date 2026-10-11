@@ -1,0 +1,15 @@
+# Проверка backend
+
+Запускать наборы последовательно: npm test, npm run typecheck, npm run build, npm run test:e2e. Перед тестами запустить npm run db:test:up. Штатный scripts/test-db.mjs генерирует Prisma Client и применяет миграции только к изолированной локальной microfronts_test. Рабочую БД тесты не очищают.
+
+Jest предоставляет describe, it, expect, beforeEach и afterEach при запуске тестов. Типы уже установлены через @types/jest; tsconfig.json явно включает node и jest. Отдельно импортировать эти глобальные функции не требуется. Если редактор подчёркивает их, проверить установку зависимостей и выбранный TypeScript-проект, а затем перезапустить TypeScript language server.
+
+- test/app.e2e-spec.ts проверяет существующие маршруты /, /health и /api/health. Последний выполняет запрос к PostgreSQL.
+- test/auth.e2e-spec.ts проверяет каталог из БД, cookie-сессии, изоляцию корзин, валидацию, CSRF, истечение сессий и лимит попыток входа.
+- src/**/*.spec.ts проверяет сервисы, включая перенос гостевой корзины на уровне CartService.
+
+Тестовое приложение создаётся через Test.createTestingModule и не запускает main.ts. Поэтому E2E явно подключает ValidationPipe с теми же whitelist, forbidNonWhitelisted и transform. При изменении настроек запуска синхронизировать тестовый bootstrap.
+
+Текущий HTTP-контракт: register возвращает 201 и { success: true }, login/logout — 200 и { success: true }. Пользователь возвращается через GET /api/auth/me. Регистрация и вход сейчас не вызывают mergeGuest: гостевая корзина остаётся отдельной. Тесты отражают это поведение; автоматический перенос не считается реализованным HTTP-сценарием.
+
+CI устанавливает зависимости, запускает сервисные тесты, проверку типов всего проекта (включая test/), сборку, E2E и Docker build. Сборка Nest исключает тестовые файлы, поэтому сама по себе не заменяет npm run typecheck.

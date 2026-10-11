@@ -22,6 +22,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test -- --runInBand
+      - run: npm run typecheck
       - run: npm run build
       - run: npm run test:e2e -- --runInBand
       - run: docker build --tag microfronts-backend:ci .
