@@ -6,15 +6,18 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../database/prisma.service';
-import { products } from '../catalog/products';
 
 type StoredCart = { quantities: Record<string, number>; revision: number };
 
 @Injectable()
 export class CartService {
   constructor(private readonly database: PrismaService) {}
-  listProducts() {
-    return products.map((product) => ({ ...product }));
+  async listProducts() {
+    const products = await this.database.product.findMany({ orderBy: { id: 'asc' } });
+    return products.map(({ badge, ...product }) => ({
+      ...product,
+      ...(badge === null ? {} : { badge }),
+    }));
   }
   validateGuestKey(key: string) {
     if (
@@ -58,10 +61,15 @@ export class CartService {
       update: cart,
     });
   }
-  private response(cart: StoredCart) {
+  private async response(tx: Prisma.TransactionClient, cart: StoredCart) {
+    const products = await tx.product.findMany({
+      where: { id: { in: Object.keys(cart.quantities) } },
+    });
+    const byId = new Map(products.map((product) => [product.id, product]));
     const items = Object.entries(cart.quantities).map(
       ([productId, quantity]) => {
-        const product = products.find((item) => item.id === productId)!;
+        const product = byId.get(productId);
+        if (!product) throw new NotFoundException('Product not found');
         return {
           productId,
           title: product.title,
@@ -107,7 +115,7 @@ export class CartService {
   async getCart(key: string) {
     key = this.normalize(key);
     return this.database.withLocks([`cart:${key}`], async (tx) =>
-      this.response(await this.cart(tx, key)),
+      this.response(tx, await this.cart(tx, key)),
     );
   }
   async change(
@@ -117,10 +125,7 @@ export class CartService {
     add = false,
   ) {
     key = this.normalize(key);
-    if (
-      typeof productId !== 'string' ||
-      !products.some((item) => item.id === productId)
-    )
+    if (typeof productId !== 'string')
       throw new NotFoundException('Product not found');
     if (
       typeof quantity !== 'number' ||
@@ -131,12 +136,14 @@ export class CartService {
       throw new BadRequestException('Quantity must be an integer from 1 to 99');
     return this.database.withLocks([`cart:${key}`], async (tx) => {
       const cart = await this.cart(tx, key);
+      if (!(await tx.product.findUnique({ where: { id: productId } })))
+        throw new NotFoundException('Product not found');
       const next = quantity + (add ? (cart.quantities[productId] ?? 0) : 0);
       if (next > 99) throw new BadRequestException('Maximum quantity is 99');
       cart.quantities[productId] = next;
       cart.revision += 1;
       await this.save(tx, key, cart);
-      return this.response(cart);
+      return this.response(tx, cart);
     });
   }
   async remove(key: string, productId: string) {
@@ -148,7 +155,7 @@ export class CartService {
         cart.revision += 1;
       }
       await this.save(tx, key, cart);
-      return this.response(cart);
+      return this.response(tx, cart);
     });
   }
 }

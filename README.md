@@ -25,8 +25,14 @@ PostgreSQL хранит пользователей, хеши паролей и �
 - [src/shop](src/shop) — HTTP API магазина.
 - [src/database](src/database) — Prisma provider и подключение.
 - [src/common/guards](src/common/guards) — CSRF-защита.
-- [src/catalog/products.ts](src/catalog/products.ts) — демонстрационный каталог.
+- Каталог хранится в таблице `products`; `CartService` читает товары и цены через Prisma.
 - [prisma/schema.prisma](prisma/schema.prisma) — модели, [prisma/migrations](prisma/migrations) — SQL-история.
+
+## Каталог товаров
+
+`GET /api/products` читает каталог из PostgreSQL. Добавлены поля `description`, `rating` (0–5, `null` — оценок пока нет), `createdAt` и `updatedAt` (даты ISO 8601). Рейтинг пока хранится как значение; сбор пользовательских оценок не реализован. Дата создания заполняется автоматически, дата изменения обновляется Prisma при изменении товара. При прямом SQL-обновлении дату изменения нужно задавать явно. Цены корзины также берутся из БД; пока поддерживается USD.
+
+Миграция `20261010000100_add_products` добавляет три прежних демонстрационных товара с сохранением ID и цен, описания и ограничения цены/рейтинга. Применить: `npm run db:deploy`, затем `npm run db:generate` и перезапустить backend. Миграция выполняется один раз и не перезаписывает последующие изменения товаров. Редактировать данные можно через `npm run db:studio`.
 
 ## API и размещение
 

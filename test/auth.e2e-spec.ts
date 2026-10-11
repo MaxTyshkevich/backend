@@ -26,6 +26,24 @@ describe('Authentication and cart ownership', () => {
   afterEach(async () => {
     await app.close();
   });
+  it('returns database products with descriptions, ratings and ISO timestamps', async () => {
+    const id = randomUUID();
+    try {
+      await database.product.create({ data: {
+        id, title: 'API product', description: 'Product from the database', priceMinor: 4200, rating: 4.2,
+      } });
+      const response = await request(app.getHttpServer()).get('/api/products').expect(200);
+      const product = response.body.find((item: { id: string }) => item.id === id);
+      expect(product).toEqual({
+        id, title: 'API product', description: 'Product from the database', priceMinor: 4200,
+        currency: 'USD', rating: 4.2, createdAt: expect.any(String), updatedAt: expect.any(String),
+      });
+      expect(new Date(product.createdAt).toISOString()).toBe(product.createdAt);
+      expect(new Date(product.updatedAt).toISOString()).toBe(product.updatedAt);
+    } finally {
+      await database.product.deleteMany({ where: { id } });
+    }
+  });
   it('registers, merges only once, restores session, isolates accounts and revokes logout', async () => {
     const guest = randomUUID();
     const server = app.getHttpServer();
