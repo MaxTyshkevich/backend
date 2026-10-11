@@ -13,6 +13,20 @@ enum Role {
   ADMIN
 }
 
+model Product {
+  id          String   @id
+  title       String   @db.VarChar(200)
+  description String
+  priceMinor  Int      @map("price_minor")
+  currency    String   @default("USD") @db.VarChar(3)
+  badge       String?  @db.VarChar(80)
+  rating      Float?   @db.DoublePrecision
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("products")
+}
+
 model User {
   id           String       @id @default(uuid()) @db.Uuid
   email        String       @unique @db.VarChar(254)

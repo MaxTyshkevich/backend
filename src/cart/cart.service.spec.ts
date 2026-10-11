@@ -21,6 +21,72 @@ describe('CartService with PostgreSQL', () => {
   afterEach(async () => {
     await db.onModuleDestroy();
   });
+  it('reads new database products, current prices and updated timestamps', async () => {
+    const id = randomUUID();
+    const createdAt = new Date('2020-01-01T00:00:00Z');
+    try {
+      await db.product.create({
+        data: {
+          id,
+          title: 'Database product',
+          description: 'Stored in PostgreSQL',
+          priceMinor: 1250,
+          rating: 4.5,
+          createdAt,
+          updatedAt: createdAt,
+        },
+      });
+      expect(await cart.listProducts()).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id,
+            description: 'Stored in PostgreSQL',
+            rating: 4.5,
+            createdAt,
+          }),
+        ]),
+      );
+      const key = randomUUID();
+      expect((await cart.change(key, id, 2)).totalMinor).toBe(2500);
+      const updated = await db.product.update({
+        where: { id },
+        data: { priceMinor: 1500, rating: 5 },
+      });
+      expect(updated.createdAt).toEqual(createdAt);
+      expect(updated.updatedAt.getTime()).toBeGreaterThan(createdAt.getTime());
+      expect((await cart.getCart(key)).totalMinor).toBe(3000);
+      await db.product.delete({ where: { id } });
+      await expect(cart.getCart(key)).rejects.toThrow(NotFoundException);
+      expect((await cart.remove(key, id)).items).toEqual([]);
+    } finally {
+      await db.product.deleteMany({ where: { id } });
+    }
+  });
+  it('enforces product rating and price constraints in PostgreSQL', async () => {
+    const id = randomUUID();
+    const data = { id, title: 'Constraints', description: '', priceMinor: 100 };
+    try {
+      for (const rating of [-0.1, 5.1]) {
+        await expect(
+          db.product.create({ data: { ...data, rating } }),
+        ).rejects.toThrow();
+      }
+      await expect(
+        db.product.create({ data: { ...data, priceMinor: -1 } }),
+      ).rejects.toThrow();
+      await expect(
+        db.product.create({ data: { ...data, currency: 'EUR' } }),
+      ).rejects.toThrow();
+      expect((await db.product.create({ data })).rating).toBeNull();
+      for (const rating of [0, 5]) {
+        expect(
+          (await db.product.update({ where: { id }, data: { rating } })).rating,
+        ).toBe(rating);
+      }
+    } finally {
+      await db.product.deleteMany({ where: { id } });
+    }
+  });
   it('calculates prices, isolates carts and rejects invalid mutations', async () => {
     const a = randomUUID(),
       b = randomUUID();
