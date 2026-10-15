@@ -34,10 +34,7 @@ export class ShopController {
     this.shop.validateGuestKey(key);
     return key;
   }
-  @Get('health') async health() {
-    await this.database.$queryRaw`SELECT 1`;
-    return { status: 'ok', storage: 'postgresql', contractVersion: 2 };
-  }
+
   @Get('products') products() {
     return this.shop.listProducts();
   }
