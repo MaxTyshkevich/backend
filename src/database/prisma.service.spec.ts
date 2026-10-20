@@ -30,7 +30,6 @@ it('persists users, sessions and carts across connection reopen', async () => {
         await auth.login({
           email: user.email,
           password: 'long test password',
-          name: '',
         })
       ).id,
     ).toBe(user.id);
