@@ -25,7 +25,7 @@ frontend → backend-сервис → внутренняя сеть Railway → 
 Установлены Node 24 и Docker Desktop. Docker Desktop должен быть запущен в режиме Linux containers. Открой терминал:
 
 ```powershell
-cd F:\microfronts\apps\backend
+cd F:\microfronts\backend
 npm ci
 npm run db:setup
 npm run db:up
@@ -49,9 +49,9 @@ npm run start:dev
 
 ```powershell
 cd F:\microfronts
-npm --prefix apps/backend run db:up
-npm --prefix apps/backend run db:deploy
-npm --prefix integration run dev
+npm --prefix backend run db:up
+npm --prefix backend run db:deploy
+npm --prefix ../microfronts-support/integration run dev
 ```
 
 Не запускай одновременно два экземпляра Nest на одном порту. Для остановки Nest — `Ctrl+C`. Для остановки БД — `npm run db:stop` из backend. Данные останутся. `npm run db:logs` покажет журнал, `docker compose ps` — состояние контейнеров.
@@ -169,7 +169,7 @@ npm run build
 1. Открой Railway-проект, где уже размещён backend, и нужное окружение. Добавь сервис **PostgreSQL** через меню New/Database. Дождись его готовности и проверь, что к нему подключён постоянный volume. Создание сервиса может изменить расходы проекта.
 2. В Variables **backend-сервиса** добавь reference variable `DATABASE_URL`, выбрав переменную `DATABASE_URL` PostgreSQL-сервиса. Если сервис называется `Postgres`, запись имеет вид `${{Postgres.DATABASE_URL}}`. Используй фактическое имя сервиса. Локальный `.env` туда не загружай.
 3. Сохрани `NODE_ENV=production`, актуальные `CORS_ORIGINS` и настройку frontend proxy. `APP_DB_PATH` больше не используется. Не устанавливай `COOKIE_SECURE=false` на публичном HTTPS. Локальные `POSTGRES_PASSWORD`/`POSTGRES_PORT` backend-сервису Railway не нужны.
-4. Для отдельного backend-репозитория root directory — его корень. Если подключён весь workspace как монорепозиторий, укажи корень сервиса `apps/backend` и корректный путь к config-as-code; в интерфейсе проверь, что Railway обнаружил именно этот `railway.json` и Dockerfile.
+4. Для отдельного backend-репозитория root directory — его корень. В интерфейсе проверь, что Railway обнаружил именно этот `railway.json` и Dockerfile.
 5. До релиза проверь итоговые Settings: builder Dockerfile, pre-deploy `npm run db:deploy`, start `node dist/main.js`, healthcheck `/api/health`. Эти значения уже есть в файле. Убери конфликтующие старые команды в UI. Дай БД завершить первый запуск до первого релиза API.
 6. После сохранения настроек и публикации кода дождись успешного pre-deploy, затем успешного запуска API. Проверь `/api/health`, регистрацию, вход и корзину. Старые SQLite-пользователи здесь отсутствуют по принятому решению.
 
@@ -218,18 +218,18 @@ npm run build
 
 Тесты используют отдельный PostgreSQL на `127.0.0.1:5434`, БД `microfronts_test`. Его данные временные. Runner отказывается очищать dev/production URL. При другом порте задай `POSTGRES_TEST_PORT` в `.env`; для внешнего тестового запуска доступен `TEST_DATABASE_URL`, разрешён только локальный тестовый сервер с указанным именем БД. Не запускай одновременно несколько наборов тестов против одной test-БД.
 
-API- и браузерные тесты integration тоже используют этот контейнер, автоматически применяют миграции и очищают только test-БД перед стартом API. Перед ними нужна сборка backend. Например, `npm --prefix integration run test:api` из workspace.
+API- и браузерные тесты integration тоже используют этот контейнер, автоматически применяют миграции и очищают только test-БД перед стартом API. Перед ними нужна сборка backend. Например, `npm --prefix ../microfronts-support/integration run test:api` из workspace.
 
 Полный Docker-стенд, включая frontend, использует **другую локальную БД** с отдельным volume проекта integration:
 
 ```powershell
-cd F:\microfronts\integration
-docker compose --env-file ../apps/backend/.env up --build -d
+cd F:\microfronts-support\integration
+docker compose --env-file ../../microfronts/backend/.env up --build -d
 ```
 
 Shell доступен на `http://localhost:8080`. Compose ждёт готовности `db`, затем успешной миграции `migrate`, затем API. Внутри этой сети адрес БД — `db:5432`. Используемый здесь пароль должен быть URL-безопасным, как пароль из `db:setup`, поскольку Compose подставляет его в URL без кодирования.
 
-Для повторного релиза полного стенда: собрать образы, явно выполнить `docker compose --env-file ../apps/backend/.env run --rm migrate`, и только при успехе обновлять backend/frontend. Завершённый старый migration-контейнер не должен заменять проверку нового релиза.
+Для повторного релиза полного стенда: собрать образы, явно выполнить `docker compose --env-file ../../microfronts/backend/.env run --rm migrate`, и только при успехе обновлять backend/frontend. Завершённый старый migration-контейнер не должен заменять проверку нового релиза.
 
 ## 10. Что проверено при настройке
 

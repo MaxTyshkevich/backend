@@ -23,13 +23,13 @@
 | Каталог товаров — массив в коде | `shop.service.ts` (разделён на cart/catalog) | Товары сейчас не хранятся в отдельной БД |
 | Схема Prisma содержит только учебные `User` и `Post` | [schema.prisma](../prisma/schema.prisma) | Она не отражает рабочие таблицы, типы ID и авторизацию |
 | Prisma CLI ожидает `DATABASE_URL`, история миграций отсутствует | [prisma.config.ts](../prisma.config.ts) | В каталоге `prisma` найден только `schema.prisma` |
-| Docker уже сохраняет SQLite в `shop-data:/app/data` | [compose.yaml](../../../integration/compose.yaml), [Dockerfile](../Dockerfile) | Данные отделены от файловой системы контейнера API |
+| Docker уже сохраняет SQLite в `shop-data:/app/data` | [compose.yaml](../../../microfronts-support/integration/compose.yaml), [Dockerfile](../Dockerfile) | Данные отделены от файловой системы контейнера API |
 | Проверка `/api/health` возвращает статический `storage: sqlite` | [shop.controller.ts](../src/shop/shop.controller.ts) | Это не проверка доступности будущего PostgreSQL |
 | Есть тест повторного открытия SQLite | `database.service.spec.ts` (прежний SQLite-тест) | Он проверяет сохранение пользователей, сессий и корзин; не проверяет PostgreSQL |
 
 Сейчас схема создаётся через `CREATE TABLE IF NOT EXISTS`, после чего безусловно выставляется `PRAGMA user_version = 1`. Это начальная инициализация, а не последовательность версионированных миграций: добавленное в код поле не появится автоматически в существующей таблице.
 
-В [README backend](../README.md) SQLite описана правильно. В [integration/README.md](../../../integration/README.md) остались устаревшие утверждения о хранении в памяти, отсутствии постоянной БД в Compose и бесплатном backend без диска. Текущий `render.yaml` (удалён при переходе на Railway) задаёт `starter` и persistent disk. При обновлении инструкции следует ориентироваться на исходники и конфигурацию; фактический облачный deploy этим исследованием не проверялся.
+В [README backend](../README.md) SQLite описана правильно. В [integration/README.md](../../../microfronts-support/integration/README.md) остались устаревшие утверждения о хранении в памяти, отсутствии постоянной БД в Compose и бесплатном backend без диска. Текущий `render.yaml` (удалён при переходе на Railway) задаёт `starter` и persistent disk. При обновлении инструкции следует ориентироваться на исходники и конфигурацию; фактический облачный deploy этим исследованием не проверялся.
 
 ## 2. Варианты реализации
 
