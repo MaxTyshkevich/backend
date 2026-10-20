@@ -13,7 +13,9 @@ type StoredCart = { quantities: Record<string, number>; revision: number };
 export class CartService {
   constructor(private readonly database: PrismaService) {}
   async listProducts() {
-    const products = await this.database.product.findMany({ orderBy: { id: 'asc' } });
+    const products = await this.database.product.findMany({
+      orderBy: { id: 'asc' },
+    });
     return products.map(({ badge, ...product }) => ({
       ...product,
       ...(badge === null ? {} : { badge }),

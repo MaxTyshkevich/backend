@@ -3,5 +3,8 @@ import { AuthModule } from '../auth/auth.module';
 import { CartModule } from '../cart/cart.module';
 import { ShopController } from './shop.controller';
 
-@Module({ imports: [AuthModule, CartModule], controllers: [ShopController] })
+@Module({
+  imports: [AuthModule, CartModule],
+  controllers: [ShopController],
+})
 export class ShopModule {}
