@@ -31,6 +31,8 @@ COPY package.json ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 
+COPY --chown=node:node scripts/seed.mjs ./scripts/seed.mjs
+
 USER node
 
 EXPOSE 3000

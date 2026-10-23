@@ -1,6 +1,6 @@
 # Проверка backend
 
-Запускать наборы последовательно: npm test, npm run typecheck, npm run build, npm run test:e2e. Перед тестами запустить npm run db:test:up. Штатный scripts/test-db.mjs генерирует Prisma Client и применяет миграции только к изолированной локальной microfronts_test. Рабочую БД тесты не очищают.
+Запускать наборы последовательно: npm test, npm run typecheck, npm run build, npm run test:e2e. Перед тестами запустить npm run db:test:up. Штатный scripts/test-db.mjs генерирует Prisma Client, применяет миграции и явно запускает seed каталога только на изолированной локальной microfronts_test. Рабочую БД тесты не очищают.
 
 Jest предоставляет describe, it, expect, beforeEach и afterEach при запуске тестов. Типы уже установлены через @types/jest; tsconfig.json явно включает node и jest. Отдельно импортировать эти глобальные функции не требуется. Если редактор подчёркивает их, проверить установку зависимостей и выбранный TypeScript-проект, а затем перезапустить TypeScript language server.
 
@@ -8,6 +8,7 @@ Jest предоставляет describe, it, expect, beforeEach и afterEach п
 - test/catalog.e2e-spec.ts проверяет категории, пустой/неизвестный/некорректный фильтр, получение товара по ID, 404 и внешние ключи категорий. Тестовые товары и категории удаляются после набора.
 - test/auth.e2e-spec.ts проверяет каталог из БД, cookie-сессии, изоляцию корзин, валидацию, CSRF, истечение сессий и лимит попыток входа.
 - src/**/*.spec.ts проверяет сервисы, включая перенос гостевой корзины на уровне CartService.
+- scripts/seed.test.mjs запускается через npm test перед Jest: в отдельной временной схеме microfronts_test применяет SQL-историю с нуля, проверяет отсутствие демонстрационных данных до seed, создание категорий/товаров и сохранение изменённых/пользовательских записей, дат и корзин при повторных запусках. Временная схема удаляется после проверки.
 
 Тестовое приложение создаётся через Test.createTestingModule и не запускает main.ts. Поэтому E2E явно подключает ValidationPipe с теми же whitelist, forbidNonWhitelisted и transform. При изменении настроек запуска синхронизировать тестовый bootstrap.
 
