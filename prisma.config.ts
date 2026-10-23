@@ -5,6 +5,7 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
+    seed: 'node scripts/seed.mjs',
   },
   datasource: {
     // Generation/build need no database. Connecting commands must supply a URL.

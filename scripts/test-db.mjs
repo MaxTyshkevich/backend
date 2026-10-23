@@ -15,7 +15,9 @@ const run = args => {
 };
 run(['node_modules/prisma/build/index.js', 'generate']);
 run(['node_modules/prisma/build/index.js', 'migrate', 'deploy']);
+run(['node_modules/prisma/build/index.js', 'db', 'seed']);
 const [kind, ...extra] = process.argv.slice(2);
+if (kind === 'unit') run(['--test', 'scripts/seed.test.mjs']);
 if (kind === 'server') {
   const { Client } = await import('pg');
   const client = new Client({ connectionString: url });
