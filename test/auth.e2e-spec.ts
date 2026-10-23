@@ -64,6 +64,8 @@ describe('Authentication and cart ownership', () => {
         priceMinor: 4200,
         currency: 'USD',
         rating: 4.2,
+        categoryId: 'other',
+        category: { id: 'other', name: 'Прочее', slug: 'other' },
         createdAt: product.createdAt,
         updatedAt: product.updatedAt,
       });

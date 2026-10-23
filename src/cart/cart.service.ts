@@ -12,15 +12,6 @@ type StoredCart = { quantities: Record<string, number>; revision: number };
 @Injectable()
 export class CartService {
   constructor(private readonly database: PrismaService) {}
-  async listProducts() {
-    const products = await this.database.product.findMany({
-      orderBy: { id: 'asc' },
-    });
-    return products.map(({ badge, ...product }) => ({
-      ...product,
-      ...(badge === null ? {} : { badge }),
-    }));
-  }
   validateGuestKey(key: string) {
     if (
       !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
