@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { CartService } from './cart.service';
+import { CatalogService } from '../catalog/catalog.service';
 import { PrismaService } from '../database/prisma.service';
 import { AuthService } from '../auth/auth.service';
 import { clearTestDatabase } from '../../test/database';
@@ -36,7 +37,7 @@ describe('CartService with PostgreSQL', () => {
           updatedAt: createdAt,
         },
       });
-      expect(await cart.listProducts()).toEqual(
+      expect(await new CatalogService(db).listProducts()).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             id,

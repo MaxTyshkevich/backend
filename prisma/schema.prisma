@@ -23,8 +23,20 @@ model Product {
   rating      Float?   @db.DoublePrecision
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  categoryId  String   @default("other") @map("category_id")
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
+  @@index([categoryId])
   @@map("products")
+}
+
+model Category {
+  id       String    @id
+  name     String    @db.VarChar(100)
+  slug     String    @unique @db.VarChar(100)
+  products Product[]
+
+  @@map("categories")
 }
 
 model User {

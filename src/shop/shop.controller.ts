@@ -40,9 +40,6 @@ export class ShopController {
     return { status: 'ok', storage: 'postgresql', contractVersion: 2 };
   }
 
-  @Get('products') products() {
-    return this.shop.listProducts();
-  }
   @Get('cart') async cart(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
