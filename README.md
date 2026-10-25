@@ -23,6 +23,7 @@ PostgreSQL хранит пользователей, хеши паролей и �
 
 - [src/auth](src/auth) — регистрация, вход, сессии.
 - [src/cart](src/cart) — корзины и транзакционный перенос гостевой корзины.
+- [src/catalog](src/catalog) — самостоятельный `CatalogModule` с публичным API категорий и товаров; `CatalogService` остаётся внутренним провайдером модуля. Модуль подключён в `AppModule`.
 - [src/shop](src/shop) — HTTP API магазина.
 - [src/database](src/database) — Prisma provider и подключение.
 - [src/common/guards](src/common/guards) — CSRF-защита.
