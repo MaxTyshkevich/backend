@@ -51,7 +51,7 @@ PostgreSQL хранит пользователей, хеши паролей и �
 
 ## API и размещение
 
-Auth: GET /api/auth/me, POST /api/auth/register, /api/auth/login, /api/auth/logout. Сессия действует семь дней. Регистрация принимает name, email, password (12–128 символов). При входе/регистрации X-Cart-Key позволяет однократно перенести гостевую корзину.
+Auth: GET /api/auth/me, POST /api/auth/register, /api/auth/login, /api/auth/logout. Сессия действует семь дней. Регистрация принимает name, email, password (12–128 символов). При входе и регистрации гостевая корзина остаётся отдельной: переданный X-Cart-Key сейчас не запускает её перенос. Метод `CartService.mergeGuest` существует, но эти HTTP-маршруты его не вызывают.
 
 Используй same-origin /api proxy на frontend: он должен передавать Cookie, Set-Cookie и Origin. CORS_ORIGINS содержит точные разрешённые origins. Мутации требуют X-Requested-With: microfronts. Cookie — HttpOnly, SameSite=Lax, Secure в production. COOKIE_SECURE=false предназначен только для локального HTTP Docker. X-Session-User проверяет ожидаемую личность, а не даёт доступ.
 
