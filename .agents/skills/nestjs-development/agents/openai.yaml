@@ -1,0 +1,3 @@
+interface:
+  display_name: "NestJS: разработка backend"
+  short_description: "Архитектура и качество NestJS backend с Prisma"
