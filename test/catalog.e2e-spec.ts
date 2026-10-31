@@ -4,6 +4,7 @@ import request from 'supertest';
 import type { App } from 'supertest/types';
 import { randomUUID } from 'node:crypto';
 import { AppModule } from '../src/app.module';
+import { configureValidation } from '../src/configure-validation';
 import { PrismaService } from '../src/database/prisma.service';
 
 describe('Catalog categories and product details', () => {
@@ -17,6 +18,7 @@ describe('Catalog categories and product details', () => {
       imports: [AppModule],
     }).compile();
     app = module.createNestApplication();
+    configureValidation(app);
     db = module.get(PrismaService);
     await app.init();
     await db.category.create({

@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
+import { configureValidation } from '../src/configure-validation';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 import { randomUUID } from 'node:crypto';
@@ -21,14 +22,7 @@ describe('Authentication and cart ownership', () => {
     }).compile();
     app = module.createNestApplication();
     database = module.get(PrismaService);
-    // Test.createNestApplication does not execute main.ts.
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
+    configureValidation(app);
     await app.init();
     await clearTestDatabase(database);
   });
@@ -74,6 +68,44 @@ describe('Authentication and cart ownership', () => {
     } finally {
       await database.product.deleteMany({ where: { id } });
     }
+  });
+  it('preserves cart mutation routes, revisions and CSRF protection', async () => {
+    const server = app.getHttpServer();
+    const guestHeaders = { ...headers, 'X-Cart-Key': randomUUID() };
+    await request(server)
+      .post('/api/cart/items')
+      .set(guestHeaders)
+      .send({ productId: 'dock', quantity: 2 })
+      .expect(201);
+    await request(server)
+      .patch('/api/cart/items/dock')
+      .set('X-Cart-Key', guestHeaders['X-Cart-Key'])
+      .send({ quantity: 3 })
+      .expect(403);
+    await request(server)
+      .patch('/api/cart/items/dock')
+      .set(guestHeaders)
+      .send({ quantity: 3 })
+      .expect(200)
+      .expect(
+        ({
+          body,
+        }: {
+          body: { revision: number; items: { quantity: number }[] };
+        }) => {
+          expect(body.revision).toBe(2);
+          expect(body.items[0].quantity).toBe(3);
+        },
+      );
+    await request(server)
+      .delete('/api/cart/items/dock')
+      .set('X-Cart-Key', guestHeaders['X-Cart-Key'])
+      .expect(403);
+    await request(server)
+      .delete('/api/cart/items/dock')
+      .set(guestHeaders)
+      .expect(200)
+      .expect({ items: [], totalMinor: 0, currency: 'USD', revision: 3 });
   });
   it('registers, keeps guest cart separate, restores session, isolates accounts and revokes logout', async () => {
     const guest = randomUUID();
