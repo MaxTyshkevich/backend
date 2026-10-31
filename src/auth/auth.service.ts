@@ -98,6 +98,7 @@ export class AuthService {
           name: dto.name,
           passwordHash,
           role: Role.USER,
+          profile: { create: {} },
         },
         select: publicFields,
       });

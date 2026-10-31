@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import { Client } from 'pg';
-import { seedCatalog } from './seed.mjs';
+import { products, seedCatalog } from './seed.mjs';
+import { seedDemo, localDemoUrl } from './seed-demo.mjs';
 
 test('fresh migrations contain no demo data; seed is repeatable and preserves edited/custom records', async () => {
   const url = new URL(process.env.TEST_DATABASE_URL || '');
@@ -50,11 +51,9 @@ test('fresh migrations contain no demo data; seed is repeatable and preserves ed
     assert.deepEqual(
       (await client.query('SELECT id, category_id FROM products ORDER BY id'))
         .rows,
-      [
-        { id: 'dock', category_id: 'peripherals' },
-        { id: 'keyboard', category_id: 'peripherals' },
-        { id: 'monitor', category_id: 'monitors' },
-      ],
+      products
+        .map((product) => ({ id: product.id, category_id: product.categoryId }))
+        .sort((a, b) => a.id.localeCompare(b.id)),
     );
     await client.query(
       "UPDATE products SET title = 'Edited keyboard', price_minor = 777, category_id = 'other', updated_at = CURRENT_TIMESTAMP WHERE id = 'keyboard'",
@@ -88,11 +87,66 @@ test('fresh migrations contain no demo data; seed is repeatable and preserves ed
       (await client.query('SELECT * FROM carts')).rows,
       beforeCarts,
     );
+    assert.equal(products.length, 30);
+    await seedDemo(client, 'demo-test-password');
+    assert.equal(
+      (await client.query('SELECT count(*)::int AS count FROM users')).rows[0]
+        .count,
+      5,
+    );
+    assert.equal(
+      (await client.query('SELECT count(*)::int AS count FROM profiles'))
+        .rows[0].count,
+      5,
+    );
+    assert.equal(
+      (await client.query('SELECT count(*)::int AS count FROM comments'))
+        .rows[0].count,
+      60,
+    );
+    await client.query(
+      "UPDATE profiles SET bio = 'Edited profile' WHERE user_id = 'd3e00000-0000-4000-8000-000000000001'",
+    );
+    await client.query(
+      "UPDATE comments SET text = 'Edited comment' WHERE id = 'd3c00000-0000-4000-8000-000000000001'",
+    );
+    const snapshot = async () => {
+      const rows = [];
+      for (const table of [
+        'users',
+        'profiles',
+        'comments',
+        'products',
+        'carts',
+      ]) {
+        rows.push(
+          (await client.query(`SELECT * FROM ${table} ORDER BY 1`)).rows,
+        );
+      }
+      return rows;
+    };
+    const beforeDemo = await snapshot();
+    await seedDemo(client, 'another-demo-password');
+    assert.deepEqual(await snapshot(), beforeDemo);
+    await assert.rejects(seedDemo(client, 'short'), /DEMO_PASSWORD/);
   } finally {
     await client.query('SET search_path TO public');
     if (!/^seed_test_[0-9a-f]{12}$/.test(schema))
       throw new Error('Unexpected cleanup schema');
     await client.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
     await client.end();
+  }
+});
+
+test('demo CLI accepts only the local development database', () => {
+  assert.equal(
+    localDemoUrl('postgresql://user:pass@localhost:5432/microfronts').pathname,
+    '/microfronts',
+  );
+  for (const url of [
+    'postgresql://user:pass@remote/microfronts',
+    'postgresql://user:pass@localhost/microfronts_test',
+  ]) {
+    assert.throws(() => localDemoUrl(url), /local development/);
   }
 });
