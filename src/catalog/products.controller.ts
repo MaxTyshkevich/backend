@@ -15,28 +15,23 @@ import { Role } from '../generated/prisma/enums';
 import { CsrfGuard } from '../common/guards/csrf.guard';
 import { CreateProductDto } from './dto/create-product.dto';
 
-@Controller('api')
-export class CatalogController {
+@Controller('api/products')
+export class ProductsController {
   constructor(private readonly catalog: CatalogService) {}
 
-  @Post('products')
+  @Post()
   @UseGuards(SessionGuard, RolesGuard, CsrfGuard)
   @Roles(Role.ADMIN)
   create(@Body() body: CreateProductDto) {
     return this.catalog.create(body);
   }
 
-  @Get('categories')
-  categories() {
-    return this.catalog.categories();
-  }
-
-  @Get('products')
+  @Get()
   products(@Query('category') category?: unknown) {
     return this.catalog.listProducts(category);
   }
 
-  @Get('products/:id')
+  @Get(':id')
   product(@Param('id') id: string) {
     return this.catalog.product(id);
   }

@@ -4,7 +4,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
-import { ShopModule } from './shop/shop.module';
+import { CartModule } from './cart/cart.module';
+import { HealthController } from './health.controller';
 import { CatalogModule } from './catalog/catalog.module';
 
 @Module({
@@ -13,9 +14,9 @@ import { CatalogModule } from './catalog/catalog.module';
     DatabaseModule,
     AuthModule,
     CatalogModule,
-    ShopModule,
+    CartModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
   providers: [AppService],
 })
 export class AppModule {}
