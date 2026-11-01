@@ -1,10 +1,10 @@
-# Microfronts API — NestJS, Prisma и PostgreSQL
+# Microfronts API
 
-Начни с [пошаговой инструкции: Docker, пароли, схема, миграции и Railway](docs/DATABASE_GUIDE.md).
+NestJS, Prisma и PostgreSQL. Требуются Node.js из [.nvmrc](.nvmrc) и Docker Desktop с Linux containers.
 
 ## Локальный запуск
 
-Нужны Node.js 24 LTS и запущенный Docker Desktop (Linux containers). Из папки backend:
+Из корня backend:
 
 ```powershell
 npm ci
@@ -15,22 +15,21 @@ npm run db:seed
 npm run start:dev
 ```
 
-Для последующих запусков достаточно db:up и start:dev; после получения новых миграций выполнить db:deploy. Проверка: [localhost:3000/api/health](http://localhost:3000/api/health).
+Повторный запуск: `db:up` и `start:dev`; после получения миграций — `db:deploy`. Seed добавляет только отсутствующие категории и товары, сохраняя существующие записи. Проверка: [localhost:3000/api/health](http://localhost:3000/api/health). Остановить БД без потери данных: `npm run db:stop`.
 
-PostgreSQL хранит пользователей, хеши паролей и токенов, корзины, отметки переноса и ограничения попыток входа. Данные находятся в Docker volume. Остановка или пересоздание контейнера не удаляет данные и не меняет пароль. Локальная база и Railway — разные базы. SQLite больше не используется; перенос старых данных не выполнялся по согласованному решению.
+## Структура
 
-## Код и схема
-
-- [src/auth](src/auth) — регистрация, вход, сессии.
+- [src/auth](src/auth) — регистрация, вход, cookie-сессии и Guards доступа.
+- [src/cart](src/cart) — HTTP API корзины, транзакции и перенос гостевой корзины.
+- [src/catalog](src/catalog) — контроллеры товаров и категорий, внутренний CatalogService.
 - [src/profile](src/profile) — чтение и редактирование собственного профиля.
 - [src/comments](src/comments) — комментарии товаров и проверка авторства.
-- [src/cart](src/cart) — корзины и транзакционный перенос гостевой корзины.
-- [src/catalog](src/catalog) — самостоятельный `CatalogModule` с публичным API категорий и товаров; `CatalogService` остаётся внутренним провайдером модуля. Модуль подключён в `AppModule`.
-- [src/shop](src/shop) — HTTP API магазина.
-- [src/database](src/database) — Prisma provider и подключение.
 - [src/common/guards](src/common/guards) — CSRF-защита.
+- [src/database](src/database) — общий Prisma provider и блокировки транзакций.
+- [src/health.controller.ts](src/health.controller.ts) — проверка подключения к БД.
+- [prisma](prisma) — схема и история миграций; [scripts](scripts) — настройка, seed и тестовый runner.
+
 - Каталог хранится в таблице `products`; `CartService` читает товары и цены через Prisma.
-- [prisma/schema.prisma](prisma/schema.prisma) — модели, [prisma/migrations](prisma/migrations) — SQL-история.
 
 ## Каталог товаров
 
@@ -70,15 +69,12 @@ Backend размещается на Railway, отдельно от PostgreSQL-с
 
 ## Проверки
 
-Подробности конфигурации Jest и актуальных E2E-сценариев: [docs/TESTING.md](docs/TESTING.md).
-
 ```powershell
 npm run db:test:up
 npm test
-npm run test:e2e
+npm run typecheck
 npm run build
+npm run test:e2e
 ```
 
-Тесты работают с отдельной временной БД microfronts_test на порту 5434. Запускай наборы последовательно. Prisma Studio: npm run db:studio. Остановить локальную БД без потери данных: npm run db:stop.
-
-[Исходный исследовательский отчёт](docs/DATABASE_DOCKER_PRISMA_REPORT.md) описывает состояние до внедрения; текущая инструкция — DATABASE_GUIDE.md.
+Наборы тестов запускаются последовательно на локальной `microfronts_test`. Backend размещается отдельно от PostgreSQL; [railway.json](railway.json) задаёт Docker-сборку, pre-deploy миграции и healthcheck.

@@ -12,17 +12,13 @@ import {
 import type { Request, Response, CookieOptions } from 'express';
 import { AuthService, sessionCookie, sessionLifetime } from './auth.service';
 import { CsrfGuard } from '../common/guards/csrf.guard';
-import { CartService } from '../cart/cart.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
 @Controller('api/auth')
 @UseGuards(CsrfGuard)
 export class AuthController {
-  constructor(
-    private readonly auth: AuthService,
-    private readonly shop: CartService,
-  ) {}
+  constructor(private readonly auth: AuthService) {}
   private options(): CookieOptions {
     return {
       httpOnly: true,

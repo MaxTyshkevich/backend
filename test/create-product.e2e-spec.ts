@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
-import { ValidationPipe, type INestApplication } from '@nestjs/common';
+import { type INestApplication } from '@nestjs/common';
+import { configureValidation } from '../src/configure-validation';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 import { randomUUID } from 'node:crypto';
@@ -25,13 +26,7 @@ describe('Administrator product creation', () => {
       imports: [AppModule],
     }).compile();
     app = module.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
+    configureValidation(app);
     db = module.get(PrismaService);
     await app.init();
     await clearTestDatabase(db);
