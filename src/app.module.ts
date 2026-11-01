@@ -7,6 +7,8 @@ import { AuthModule } from './auth/auth.module';
 import { CartModule } from './cart/cart.module';
 import { HealthController } from './health.controller';
 import { CatalogModule } from './catalog/catalog.module';
+import { ProfileModule } from './profile/profile.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -14,7 +16,9 @@ import { CatalogModule } from './catalog/catalog.module';
     DatabaseModule,
     AuthModule,
     CatalogModule,
-    CartModule,
+    ShopModule,
+    ProfileModule,
+    CommentsModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService],
