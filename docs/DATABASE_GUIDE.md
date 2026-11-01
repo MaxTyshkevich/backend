@@ -106,6 +106,8 @@ docker compose exec db psql -U microfronts -d microfronts
 
 ## 5. Структура backend и схема
 
+Профили (`profiles`, связь 1:1 с пользователем), комментарии (`comments`, связи с товаром и автором), их API и отдельное локальное demo-заполнение описаны в [руководстве профилей и комментариев](PROFILE_COMMENTS_API.md). Каталог seed расширен до 30 товаров; прежние ID сохранены.
+
 ```text
 src/
   app.module.ts           сборка модулей приложения

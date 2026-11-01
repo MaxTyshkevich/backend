@@ -14,6 +14,7 @@ enum Role {
 }
 
 model Product {
+  comments    Comment[]
   id          String   @id
   title       String   @db.VarChar(200)
   description String
@@ -40,6 +41,8 @@ model Category {
 }
 
 model User {
+  profile      Profile?
+  comments     Comment[]
   id           String       @id @default(uuid()) @db.Uuid
   email        String       @unique @db.VarChar(254)
   name         String       @db.VarChar(80)
@@ -50,6 +53,32 @@ model User {
   role Role @default(USER)
 
   @@map("users")
+}
+
+model Profile {
+  userId    String   @id @map("user_id") @db.Uuid
+  bio       String   @default("") @db.VarChar(2000)
+  avatarUrl String?  @map("avatar_url") @db.VarChar(2048)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  productId String   @map("product_id")
+  userId    String   @map("user_id") @db.Uuid
+  text      String   @db.VarChar(5000)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([productId, createdAt, id])
+  @@index([userId])
+  @@map("comments")
 }
 
 model Session {

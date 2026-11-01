@@ -6,6 +6,8 @@ import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { ShopModule } from './shop/shop.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { ProfileModule } from './profile/profile.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { CatalogModule } from './catalog/catalog.module';
     AuthModule,
     CatalogModule,
     ShopModule,
+    ProfileModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
