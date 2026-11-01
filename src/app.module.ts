@@ -16,7 +16,7 @@ import { CommentsModule } from './comments/comments.module';
     DatabaseModule,
     AuthModule,
     CatalogModule,
-    ShopModule,
+    CartModule,
     ProfileModule,
     CommentsModule,
   ],

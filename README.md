@@ -22,20 +22,14 @@ npm run start:dev
 - [src/auth](src/auth) — регистрация, вход, cookie-сессии и Guards доступа.
 - [src/cart](src/cart) — HTTP API корзины, транзакции и перенос гостевой корзины.
 - [src/catalog](src/catalog) — контроллеры товаров и категорий, внутренний CatalogService.
+- [src/profile](src/profile) — чтение и редактирование собственного профиля.
+- [src/comments](src/comments) — комментарии товаров и проверка авторства.
+- [src/common/guards](src/common/guards) — CSRF-защита.
 - [src/database](src/database) — общий Prisma provider и блокировки транзакций.
 - [src/health.controller.ts](src/health.controller.ts) — проверка подключения к БД.
 - [prisma](prisma) — схема и история миграций; [scripts](scripts) — настройка, seed и тестовый runner.
 
-- [src/auth](src/auth) — регистрация, вход, сессии.
-- [src/profile](src/profile) — чтение и редактирование собственного профиля.
-- [src/comments](src/comments) — комментарии товаров и проверка авторства.
-- [src/cart](src/cart) — корзины и транзакционный перенос гостевой корзины.
-- [src/catalog](src/catalog) — самостоятельный `CatalogModule` с публичным API категорий и товаров; `CatalogService` остаётся внутренним провайдером модуля. Модуль подключён в `AppModule`.
-- [src/shop](src/shop) — HTTP API магазина.
-- [src/database](src/database) — Prisma provider и подключение.
-- [src/common/guards](src/common/guards) — CSRF-защита.
 - Каталог хранится в таблице `products`; `CartService` читает товары и цены через Prisma.
-- [prisma/schema.prisma](prisma/schema.prisma) — модели, [prisma/migrations](prisma/migrations) — SQL-история.
 
 ## Каталог товаров
 
